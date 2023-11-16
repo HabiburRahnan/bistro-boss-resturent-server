@@ -126,6 +126,18 @@ async function run() {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
+    app.post("/menu", verifyToken, verifyAdmin, async (req, res) => {
+      const cartItem = req.body;
+      const result = await menuCollection.insertOne(cartItem);
+      res.send(result);
+    });
+    app.delete("/menu/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await menuCollection.deleteOne(query);
+      res.send(result);
+    });
+
     app.get("/reviwes", async (req, res) => {
       const result = await reviwesCollection.find().toArray();
       res.send(result);
@@ -141,8 +153,8 @@ async function run() {
     });
 
     app.post("/carts", async (req, res) => {
-      const cartItem = req.body;
-      const result = await cartsCollection.insertOne(cartItem);
+      const item = req.body;
+      const result = await cartsCollection.insertOne(item);
       res.send(result);
     });
 
