@@ -126,18 +126,44 @@ async function run() {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
+
+    app.get("/menu/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: id };
+      const result = await menuCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.patch("/menu/:id", async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: id };
+      const updatedDoc = {
+        $set: {
+          name: item.name,
+          category: item.Category,
+          price: item.Price,
+          recipe: item.recipe,
+          image: item.image,
+        },
+      };
+      const result = await menuCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
     app.post("/menu", verifyToken, verifyAdmin, async (req, res) => {
       const cartItem = req.body;
       const result = await menuCollection.insertOne(cartItem);
       res.send(result);
     });
-    app.delete("/menu/:id", verifyToken, verifyAdmin, async (req, res) => {
+    app.delete("/menu/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
+      const query = { _id: id };
       const result = await menuCollection.deleteOne(query);
       res.send(result);
     });
 
+    // reviwes related api
     app.get("/reviwes", async (req, res) => {
       const result = await reviwesCollection.find().toArray();
       res.send(result);
