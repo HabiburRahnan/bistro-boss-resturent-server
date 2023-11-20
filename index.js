@@ -206,7 +206,14 @@ async function run() {
         clientSecret: paymentIntent.client_secret,
       });
     });
-
+    app.get("/payment/:email", verifyToken, async (req, res) => {
+      const query = { email: req.params.email };
+      if (req.params.email !== req.decoded.email) {
+        return res.status(403).send({ message: "forbidden Access" });
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    });
     app.post("/payment", async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
@@ -220,6 +227,38 @@ async function run() {
       };
       const deleteResult = await cartsCollection.deleteMany(query);
       res.send({ paymentResult, deleteResult });
+    });
+
+    app.get("/admin-stats", verifyToken, verifyAdmin, async (req, res) => {
+      const user = await userCollection.estimatedDocumentCount();
+      const menuItems = await menuCollection.estimatedDocumentCount();
+      const orders = await paymentCollection.estimatedDocumentCount();
+      // this is not the best way
+      // const payments = await paymentCollection.find().toArray();
+      // const revenue = payments.reduce(
+      //   (total, payment) => total + payment.price,
+      //   0
+      // );
+
+      //  is this best Way
+      const result = await paymentCollection
+        .aggregate([
+          {
+            $group: {
+              _id: null,
+              totalRevenue: { $sum: "$price" },
+            },
+          },
+        ])
+        .toArray();
+      const totalRevenue =
+        (await result.length) > 0 ? result[0].totalRevenue : 0;
+      res.send({
+        user,
+        menuItems,
+        orders,
+        totalRevenue,
+      });
     });
 
     // Send a ping to confirm a successful connection
